@@ -1,10 +1,12 @@
 ==========
-apigee-cli
+apigeeX-cli (Under development)
 ==========
 
 |License|
 
-Welcome to the (Unofficial) Apigee Management API command-line interface!
+Welcome to the (Unofficial) Apigee X Management API command-line interface!
+
+For the Apigee Edge version refer to `apigee-cli`_
 
 It is designed to provide a simple command-line experience with CI/CD and SSO features in mind.
 
@@ -142,7 +144,7 @@ Disclaimer
 ----------
 This is not an officially supported Google product.
 
-
+.. _`apigee-cli`: https://github.com/darumatic/apigee-cli
 .. _`Apigee Corporation maintains their own fully-featured CLI for the Apigee Management API`: https://github.com/apigee/apigeetool-node
 
 .. |Upload Python Package badge| image:: https://github.com/mdelotavo/apigee-cli/workflows/Upload%20Python%20Package/badge.svg

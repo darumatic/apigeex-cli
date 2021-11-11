@@ -16,7 +16,7 @@ class HiddenSecret(object):
         return '*' * 16 if self.secret else ''
 
 
-KEY_LIST = ('username', 'password', 'mfa_secret', 'is_token', 'zonename', 'org', 'prefix')
+KEY_LIST = ('username', 'token', 'org',)
 config = configparser.ConfigParser()
 config.read(APIGEE_CLI_CREDENTIALS_FILE)
 profile = 'default'
@@ -37,7 +37,7 @@ except KeyError:
 
 # @click.group(cls=ClickAliasedGroup)
 # @click.command(aliases=['conf', 'config', 'cfg'])
-@click.command(help='Configure Apigee Edge credentials.')
+@click.command(help='Configure Apigee X credentials.')
 @click.option(
     '-u',
     '--username',
@@ -46,34 +46,11 @@ except KeyError:
     show_default=True,
 )
 @click.option(
-    '-p',
-    '--password',
-    prompt='Apigee password',
-    default=lambda: HiddenSecret(profile_dict['password']),
-    hide_input=True,
-    show_default='hidden' if profile_dict['password'] else 'None',
-)
-@click.option(
-    '-mfa',
-    '--mfa-secret',
-    prompt='Apigee MFA key (optional)',
-    default=lambda: HiddenSecret(profile_dict['mfa_secret']),
-    hide_input=True,
-    show_default='hidden' if profile_dict['mfa_secret'] else 'None',
-)
-@click.option(
-    '-z',
-    '--zonename',
-    prompt='Identity zone name (to support SAML authentication)',
-    default=profile_dict['zonename'],
-    show_default=True,
-)
-@click.option(
-    '--token/--no-token',
-    default=True if profile_dict['is_token'] in (True, 'True', 'true', '1') else False,
-    help='specify to use oauth without MFA',
-    prompt='Use OAuth, no MFA (optional)?',
-    show_default=True,
+    '--token',
+    default=profile_dict['token'],
+    help='specify GCP OAuth Token',
+    prompt='GCP OAuth Token',
+    show_default=False,
 )
 @click.option(
     '-o',
@@ -83,30 +60,18 @@ except KeyError:
     show_default=True,
 )
 @click.option(
-    '--prefix',
-    prompt='Default team/resource prefix (optional)',
-    default=profile_dict['prefix'],
-    show_default=True,
-)
-@click.option(
     '-P',
     '--profile',
     help='name of the user profile to create/update',
     default='default',
     show_default=True,
 )
-def configure(username, password, mfa_secret, token, zonename, org, prefix, profile):
-    if isinstance(password, HiddenSecret):
-        password = password.secret
-    if isinstance(mfa_secret, HiddenSecret):
-        mfa_secret = mfa_secret.secret
+def configure(username, token, org, profile):
+    if isinstance(token, HiddenSecret):
+        token = token.secret
     profile_dict['username'] = username
-    profile_dict['password'] = password
-    profile_dict['mfa_secret'] = mfa_secret
-    profile_dict['is_token'] = token
-    profile_dict['zonename'] = zonename
+    profile_dict['token'] = token
     profile_dict['org'] = org
-    profile_dict['prefix'] = prefix
     config[profile] = {k: v for k, v in profile_dict.items() if v}
     make_dirs(APIGEE_CLI_DIRECTORY)
     with open(APIGEE_CLI_CREDENTIALS_FILE, 'w') as cf:

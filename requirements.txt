@@ -8,6 +8,7 @@ coverage
 pudb
 pyjwt
 pyotp
+pytest
 python-gnupg>=0.3.5
 requests
 requests

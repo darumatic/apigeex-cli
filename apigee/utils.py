@@ -1,3 +1,4 @@
+from apigee import console
 import importlib
 import inspect
 import json
@@ -5,6 +6,7 @@ import logging
 import os
 import re
 import sys
+import traceback
 import zipfile
 from pathlib import Path
 
@@ -40,6 +42,18 @@ def generate_path_str(*args):
             path /= arg
     return str(path)
 
+def handle_http_resp(func):
+    def handler(*args, **kwargs):
+        try: 
+            resp = func(*args, **kwargs)
+            try:
+                console.echo(resp.status_code, json.dumps(resp.json(), indent=1))
+            except:
+                console.echo(f"failed with HTTP code: {resp.status_code}")
+        except:
+            traceback.print_exc()
+        return resp
+    return handler
 
 def is_dir(d):
     return os.path.isdir(d)

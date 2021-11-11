@@ -4,6 +4,7 @@ import requests
 from requests.exceptions import HTTPError
 
 from apigee import APIGEE_ADMIN_API_URL, auth, console
+from apigee import utils
 from apigee.apiproducts.serializer import ApiproductsSerializer
 from apigee.utils import read_file
 
@@ -49,6 +50,7 @@ class Apiproducts:
     def apiproduct_name(self, value):
         self._apiproduct_name = value
 
+    @utils.handle_http_resp
     def create_api_product(self, request_body):
         uri = CREATE_API_PRODUCT_PATH.format(api_url=APIGEE_ADMIN_API_URL, org=self._org_name)
         hdrs = auth.set_header(
@@ -56,7 +58,6 @@ class Apiproducts:
         )
         body = json.loads(request_body)
         resp = requests.post(uri, headers=hdrs, json=body)
-        resp.raise_for_status()
         return resp
 
     def delete_api_product(self):

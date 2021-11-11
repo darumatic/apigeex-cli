@@ -16,10 +16,10 @@ def apiproducts():
 
 
 def _create_api_product(
-    username, password, mfa_secret, token, zonename, org, profile, name, body, **kwargs
+    username, token, org, profile, name, body, **kwargs
 ):
     return (
-        Apiproducts(gen_auth(username, password, mfa_secret, token, zonename), org, name)
+        Apiproducts(gen_auth(username, token), org, name)
         .create_api_product(body)
         .text
     )
@@ -36,10 +36,10 @@ def create(*args, **kwargs):
 
 
 def _delete_api_product(
-    username, password, mfa_secret, token, zonename, org, profile, name, **kwargs
+    username, token, org, profile, name, **kwargs
 ):
     return (
-        Apiproducts(gen_auth(username, password, mfa_secret, token, zonename), org, name)
+        Apiproducts(gen_auth(username, token), org, name)
         .delete_api_product()
         .text
     )
@@ -54,9 +54,9 @@ def delete(*args, **kwargs):
     console.echo(_delete_api_product(*args, **kwargs))
 
 
-def _get_api_product(username, password, mfa_secret, token, zonename, org, profile, name, **kwargs):
+def _get_api_product(username, token, org, profile, name, **kwargs):
     return (
-        Apiproducts(gen_auth(username, password, mfa_secret, token, zonename), org, name)
+        Apiproducts(gen_auth(username, token), org, name)
         .get_api_product()
         .text
     )
@@ -75,8 +75,6 @@ def get(*args, **kwargs):
 
 def _list_api_products(
     username,
-    password,
-    mfa_secret,
     token,
     zonename,
     org,
@@ -88,7 +86,7 @@ def _list_api_products(
     **kwargs
 ):
     return Apiproducts(
-        gen_auth(username, password, mfa_secret, token, zonename), org, None
+        gen_auth(username, token), org, None
     ).list_api_products(prefix=prefix, expand=expand, count=count, startkey=startkey)
 
 
@@ -120,10 +118,10 @@ def list(*args, **kwargs):
 
 
 def _update_api_product(
-    username, password, mfa_secret, token, zonename, org, profile, body, **kwargs
+    username, token, org, profile, name, body, **kwargs
 ):
     return (
-        Apiproducts(gen_auth(username, password, mfa_secret, token, zonename), org, name)
+        Apiproducts(gen_auth(username, token), org, name)
         .update_api_product(body)
         .text
     )
@@ -142,10 +140,10 @@ def update(*args, **kwargs):
 
 
 def _push_apiproducts(
-    username, password, mfa_secret, token, zonename, org, profile, file, **kwargs
+    username, token, org, profile, file, **kwargs
 ):
     return Apiproducts(
-        gen_auth(username, password, mfa_secret, token, zonename), org, None
+        gen_auth(username, token), org, None
     ).push_apiproducts(file)
 
 
