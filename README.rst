@@ -20,35 +20,35 @@ Please note that this CLI is still highly experimental.
 Installation
 ------------
 
-The easiest way to install apigee-cli is to use `pip`_ in a ``virtualenv``::
+The easiest way to install apigeex-cli is to use `pip`_ in a ``virtualenv``::
 
-    $ pip install apigeecli
+    $ pip install apigeexcli
 
 or, if you are not installing in a ``virtualenv``, to install globally::
 
-    $ sudo pip install apigeecli
+    $ sudo pip install apigeexcli
 
 or for your user::
 
-    $ pip install --user apigeecli
+    $ pip install --user apigeexcli
 
-If you have the apigee-cli installed and want to upgrade to the latest version
+If you have the apigeex-cli installed and want to upgrade to the latest version
 you can run::
 
-    $ pip install --upgrade apigeecli
+    $ pip install --upgrade apigeexcli
 
 ---------------
 Getting Started
 ---------------
 
-Before using apigee-cli, you need to tell it about your Apigee Edge credentials. You
+Before using apigeex-cli, you need to set your GCP credentials. You
 can do this in three ways:
 
 * Environment variables
 * Config file
 * Command-line arguments
 
-The steps below show how to use command-line arguments to configure your Apigee Edge credentials.
+The steps below show how to use command-line arguments to configure your GCP credentials.
 
 ^^^^^^^^^^^^^^^^^^^^
 Basic authentication

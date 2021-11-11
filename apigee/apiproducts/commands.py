@@ -3,7 +3,6 @@ import click
 from apigee import console
 from apigee.apiproducts.apiproducts import Apiproducts
 from apigee.auth import common_auth_options, gen_auth
-from apigee.prefix import common_prefix_options
 from apigee.silent import common_silent_options
 from apigee.verbose import common_verbose_options
 
@@ -76,10 +75,8 @@ def get(*args, **kwargs):
 def _list_api_products(
     username,
     token,
-    zonename,
     org,
     profile,
-    prefix=None,
     expand=False,
     count=1000,
     startkey="",
@@ -87,14 +84,13 @@ def _list_api_products(
 ):
     return Apiproducts(
         gen_auth(username, token), org, None
-    ).list_api_products(prefix=prefix, expand=expand, count=count, startkey=startkey)
+    ).list_api_products(expand=expand, count=count, startkey=startkey).text
 
 
 @apiproducts.command(help='Get a list of all API product names for an organization.')
 @common_auth_options
 @common_verbose_options
 @common_silent_options
-@common_prefix_options
 @click.option(
     '--expand/--no-expand',
     default=False,
@@ -144,7 +140,7 @@ def _push_apiproducts(
 ):
     return Apiproducts(
         gen_auth(username, token), org, None
-    ).push_apiproducts(file)
+    ).push_apiproducts(file).text
 
 
 @apiproducts.command(help='Push API product to Apigee. This will create/update an API product.')
@@ -158,4 +154,4 @@ def _push_apiproducts(
     required=True,
 )
 def push(*args, **kwargs):
-    _push_apiproducts(*args, **kwargs)
+   console.echo(_push_apiproducts(*args, **kwargs))

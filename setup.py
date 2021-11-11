@@ -36,7 +36,7 @@ SETUP_ARGS = dict(
     #     [console_scripts]
     #     apigee=apigee.__main__:main
     # ''',
-    entry_points={'console_scripts': ['apigee=apigee.__main__:main']},
+    entry_points={'console_scripts': ['apigeex=apigee.__main__:main']},
     install_requires=[
         'requests>=2.22',
         'click',

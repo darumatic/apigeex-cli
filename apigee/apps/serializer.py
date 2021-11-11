@@ -2,13 +2,11 @@ import json
 
 
 class AppsSerializer:
-    def serialize_details(self, apps, format, prefix=None):
+    def serialize_details(self, apps, format):
         resp = apps
         if format == 'text':
             return apps.text
         apps = apps.json()
-        if prefix:
-            apps = [app for app in apps if app.startswith(prefix)]
         if format == 'json':
             return json.dumps(apps)
         elif format == 'table':

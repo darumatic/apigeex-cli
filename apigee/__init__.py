@@ -6,7 +6,7 @@ from pathlib import Path
 from apigee import utils
 
 APP = 'apigeecli'
-CMD = 'apigee'
+CMD = 'apigeex'
 __version__ = '0.50.1'
 description = '(Unofficial) Apigee Management API command-line interface with multi-factor authentication (MFA) and single sign-on (SSO)/SAML support'
 long_description = """(Unofficial) Apigee Management API command-line interface with multi-factor authentication (MFA) and single sign-on (SSO)/SAML support"""

@@ -84,7 +84,6 @@ class Developers:
             'attributes': json.loads(attributes)['attributes'],
         }
         resp = requests.post(uri, headers=hdrs, json=body)
-        resp.raise_for_status()
         return resp
 
     def delete_developer(self):
@@ -93,7 +92,6 @@ class Developers:
         )
         hdrs = auth.set_header(self._auth, headers={'Accept': 'application/json'})
         resp = requests.delete(uri, headers=hdrs)
-        resp.raise_for_status()
         return resp
 
     def get_developer(self):
@@ -102,7 +100,6 @@ class Developers:
         )
         hdrs = auth.set_header(self._auth, headers={'Accept': 'application/json'})
         resp = requests.get(uri, headers=hdrs)
-        resp.raise_for_status()
         return resp
 
     def get_developer_by_app(self, app_name):
@@ -111,10 +108,9 @@ class Developers:
         )
         hdrs = auth.set_header(self._auth, headers={'Accept': 'application/json'})
         resp = requests.get(uri, headers=hdrs)
-        resp.raise_for_status()
         return resp
 
-    def list_developers(self, prefix=None, expand=False, count=1000, startkey="", format='json'):
+    def list_developers(self, expand=False, count=1000, startkey="", format='json'):
         uri = LIST_DEVELOPERS_PATH.format(
             api_url=APIGEE_ADMIN_API_URL,
             org=self._org_name,
@@ -124,8 +120,7 @@ class Developers:
         )
         hdrs = auth.set_header(self._auth, headers={'Accept': 'application/json'})
         resp = requests.get(uri, headers=hdrs)
-        resp.raise_for_status()
-        return DevelopersSerializer().serialize_details(resp, format, prefix=prefix)
+        return DevelopersSerializer().serialize_details(resp, format)
 
     def set_developer_status(self, action):
         uri = SET_DEVELOPER_STATUS_PATH.format(
@@ -139,7 +134,6 @@ class Developers:
             headers={'Accept': 'application/json', 'Content-Type': 'application/octet-stream'},
         )
         resp = requests.post(uri, headers=hdrs)
-        resp.raise_for_status()
         return resp
 
     def update_developer(self, request_body):
@@ -151,7 +145,6 @@ class Developers:
         )
         body = json.loads(request_body)
         resp = requests.put(uri, headers=hdrs, json=body)
-        resp.raise_for_status()
         return resp
 
     def get_developer_attribute(self, attribute_name):
@@ -163,7 +156,6 @@ class Developers:
         )
         hdrs = auth.set_header(self._auth, headers={'Accept': 'application/json'})
         resp = requests.get(uri, headers=hdrs)
-        resp.raise_for_status()
         return resp
 
     def update_a_developer_attribute(self, attribute_name, updated_value):
@@ -176,7 +168,6 @@ class Developers:
         hdrs = auth.set_header(self._auth, headers={'Accept': 'application/json'})
         body = {'value': updated_value}
         resp = requests.post(uri, headers=hdrs, json=body)
-        resp.raise_for_status()
         return resp
 
     def delete_developer_attribute(self, attribute_name):
@@ -188,7 +179,6 @@ class Developers:
         )
         hdrs = auth.set_header(self._auth, headers={'Accept': 'application/json'})
         resp = requests.delete(uri, headers=hdrs)
-        resp.raise_for_status()
         return resp
 
     def get_all_developer_attributes(self):
@@ -197,7 +187,6 @@ class Developers:
         )
         hdrs = auth.set_header(self._auth, headers={'Accept': 'application/json'})
         resp = requests.get(uri, headers=hdrs)
-        resp.raise_for_status()
         return resp
 
     def update_all_developer_attributes(self, request_body):
@@ -209,5 +198,4 @@ class Developers:
         )
         body = json.loads(request_body)
         resp = requests.post(uri, headers=hdrs, json=body)
-        resp.raise_for_status()
         return resp

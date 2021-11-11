@@ -9,7 +9,7 @@ from apigee.verbose import common_verbose_options
 
 
 @click.group(
-    help='Developers implement client/consumer apps and must be registered with an organization on Apigee Edge.'
+    help='Developers implement client/consumer apps and must be registered with an organization on Apigee X.'
 )
 def developers():
     pass
@@ -17,13 +17,10 @@ def developers():
 
 def _create_developer(
     username,
-    password,
-    mfa_secret,
     token,
-    zonename,
     org,
     profile,
-    name,
+    email,
     first_name,
     last_name,
     user_name,
@@ -31,7 +28,7 @@ def _create_developer(
     **kwargs
 ):
     return (
-        Developers(gen_auth(username, password, mfa_secret, token, zonename), org, name)
+        Developers(gen_auth(username, token), org, email)
         .create_developer(first_name, last_name, user_name, attributes=attributes)
         .text
     )
@@ -44,16 +41,16 @@ def _create_developer(
 @common_verbose_options
 @common_silent_options
 @click.option(
-    '-n',
-    '--name',
-    help="The developer's email. This value is used to uniquely identify the developer in Apigee Edge.",
+    '-e',
+    '--email',
+    help="The developer's email. This value is used to uniquely identify the developer in Apigee X.",
     required=True,
 )
 @click.option('--first-name', help='The first name of the developer.', required=True)
 @click.option('--last-name', help='The last name of the developer.', required=True)
 @click.option(
     '--user-name',
-    help="The developer's username. This value is not used by Apigee Edge.",
+    help="The developer's username.",
     required=True,
 )
 @click.option(
@@ -67,10 +64,10 @@ def create(*args, **kwargs):
 
 
 def _delete_developer(
-    username, password, mfa_secret, token, zonename, org, profile, name, **kwargs
+    username, token, org, profile, email, **kwargs
 ):
     return (
-        Developers(gen_auth(username, password, mfa_secret, token, zonename), org, name)
+        Developers(gen_auth(username, token), org, email)
         .delete_developer()
         .text
     )
@@ -83,8 +80,8 @@ def _delete_developer(
 @common_verbose_options
 @common_silent_options
 @click.option(
-    '-n',
-    '--name',
+    '-e',
+    '--email',
     help="The developer's email. This value is used to uniquely identify the developer in Apigee Edge.",
     required=True,
 )
@@ -92,9 +89,9 @@ def delete(*args, **kwargs):
     console.echo(_delete_developer(*args, **kwargs))
 
 
-def _get_developer(username, password, mfa_secret, token, zonename, org, profile, name, **kwargs):
+def _get_developer(username, token, org, profile, email, **kwargs):
     return (
-        Developers(gen_auth(username, password, mfa_secret, token, zonename), org, name)
+        Developers(gen_auth(username, token), org, email)
         .get_developer()
         .text
     )
@@ -107,9 +104,9 @@ def _get_developer(username, password, mfa_secret, token, zonename, org, profile
 @common_verbose_options
 @common_silent_options
 @click.option(
-    '-n',
-    '--name',
-    help="The developer's email. This value is used to uniquely identify the developer in Apigee Edge.",
+    '-e',
+    '--email',
+    help="The developer's email.",
     required=True,
 )
 def get(*args, **kwargs):
@@ -117,10 +114,10 @@ def get(*args, **kwargs):
 
 
 def _get_developer_by_app(
-    username, password, mfa_secret, token, zonename, org, profile, app_name, **kwargs
+    username, token, org, profile, app_name, **kwargs
 ):
     return (
-        Developers(gen_auth(username, password, mfa_secret, token, zonename), org, None)
+        Developers(gen_auth(username, token), org, None)
         .get_developer_by_app(app_name)
         .text
     )
@@ -139,21 +136,17 @@ def get_by_app(*args, **kwargs):
 
 def _list_developers(
     username,
-    password,
-    mfa_secret,
     token,
-    zonename,
     org,
     profile,
-    prefix=None,
     expand=False,
     count=1000,
     startkey="",
     **kwargs
 ):
     return Developers(
-        gen_auth(username, password, mfa_secret, token, zonename), org, None
-    ).list_developers(prefix=prefix, expand=expand, count=count, startkey=startkey)
+        gen_auth(username, token), org, None
+    ).list_developers(expand=expand, count=count, startkey=startkey)
 
 
 @developers.command(
@@ -162,7 +155,6 @@ def _list_developers(
 @common_auth_options
 @common_verbose_options
 @common_silent_options
-@common_prefix_options
 @click.option(
     '--expand/--no-expand',
     default=False,
@@ -186,10 +178,10 @@ def list(*args, **kwargs):
 
 
 def _set_developer_status(
-    username, password, mfa_secret, token, zonename, org, profile, name, action, **kwargs
+    username, token, org, profile, email, action, **kwargs
 ):
     return (
-        Developers(gen_auth(username, password, mfa_secret, token, zonename), org, name)
+        Developers(gen_auth(username, token), org, email)
         .set_developer_status(action)
         .text
     )
@@ -202,9 +194,9 @@ def _set_developer_status(
 @common_verbose_options
 @common_silent_options
 @click.option(
-    '-n',
-    '--name',
-    help="The developer's email. This value is used to uniquely identify the developer in Apigee Edge.",
+    '-e',
+    '--email',
+    help="The developer's email.",
     required=True,
 )
 @click.option(
@@ -218,10 +210,10 @@ def set_status(*args, **kwargs):
 
 
 def _update_developer(
-    username, password, mfa_secret, token, zonename, org, profile, name, body, **kwargs
+    username, token, org, profile, email, body, **kwargs
 ):
     return (
-        Developers(gen_auth(username, password, mfa_secret, token, zonename), org, name)
+        Developers(gen_auth(username, token), org, email)
         .update_developer(body)
         .text
     )
@@ -234,8 +226,8 @@ def _update_developer(
 @common_verbose_options
 @common_silent_options
 @click.option(
-    '-n',
-    '--name',
+    '-e',
+    '--email',
     help="The developer's email. This value is used to uniquely identify the developer in Apigee Edge.",
     required=True,
 )
@@ -250,19 +242,16 @@ def update(*args, **kwargs):
 
 def _update_a_developer_attribute(
     username,
-    password,
-    mfa_secret,
     token,
-    zonename,
     org,
     profile,
-    name,
+    email,
     attribute_name,
     updated_value,
     **kwargs
 ):
     return (
-        Developers(gen_auth(username, password, mfa_secret, token, zonename), org, name)
+        Developers(gen_auth(username, token), org, email)
         .update_a_developer_attribute(attribute_name, updated_value)
         .text
     )
@@ -273,8 +262,8 @@ def _update_a_developer_attribute(
 @common_verbose_options
 @common_silent_options
 @click.option(
-    '-n',
-    '--name',
+    '-e',
+    '--email',
     help="The developer's email. This value is used to uniquely identify the developer in Apigee Edge.",
     required=True,
 )
@@ -285,10 +274,10 @@ def update_attr(*args, **kwargs):
 
 
 def _delete_developer_attribute(
-    username, password, mfa_secret, token, zonename, org, profile, name, attribute_name, **kwargs
+    username, token, org, profile, email, attribute_name, **kwargs
 ):
     return (
-        Developers(gen_auth(username, password, mfa_secret, token, zonename), org, name)
+        Developers(gen_auth(username, token), org, email)
         .delete_developer_attribute(attribute_name)
         .text
     )
@@ -299,9 +288,9 @@ def _delete_developer_attribute(
 @common_verbose_options
 @common_silent_options
 @click.option(
-    '-n',
-    '--name',
-    help="The developer's email. This value is used to uniquely identify the developer in Apigee Edge.",
+    '-e',
+    '--email',
+    help="The developer's email. This value is used to uniquely identify the developer in Apigee X.",
     required=True,
 )
 @click.option('--attribute-name', help='attribute name', required=True)
@@ -310,10 +299,10 @@ def delete_attr(*args, **kwargs):
 
 
 def _get_all_developer_attributes(
-    username, password, mfa_secret, token, zonename, org, profile, name, **kwargs
+    username, token, org, profile, email, **kwargs
 ):
     return (
-        Developers(gen_auth(username, password, mfa_secret, token, zonename), org, name)
+        Developers(gen_auth(username, token), org, email)
         .get_all_developer_attributes()
         .text
     )
@@ -324,9 +313,9 @@ def _get_all_developer_attributes(
 @common_verbose_options
 @common_silent_options
 @click.option(
-    '-n',
-    '--name',
-    help="The developer's email. This value is used to uniquely identify the developer in Apigee Edge.",
+    '-e',
+    '--email',
+    help="The developer's email. This value is used to uniquely identify the developer in Apigee X.",
     required=True,
 )
 def get_attrs(*args, **kwargs):
@@ -334,10 +323,10 @@ def get_attrs(*args, **kwargs):
 
 
 def _update_all_developer_attributes(
-    username, password, mfa_secret, token, zonename, org, profile, name, body, **kwargs
+    username, token, org, profile, email, body, **kwargs
 ):
     return (
-        Developers(gen_auth(username, password, mfa_secret, token, zonename), org, name)
+        Developers(gen_auth(username, token), org, email)
         .update_all_developer_attributes(body)
         .text
     )
@@ -350,9 +339,9 @@ def _update_all_developer_attributes(
 @common_verbose_options
 @common_silent_options
 @click.option(
-    '-n',
-    '--name',
-    help="The developer's email. This value is used to uniquely identify the developer in Apigee Edge.",
+    '-e',
+    '--email',
+    help="The developer's email. This value is used to uniquely identify the developer in Apigee X.",
     required=True,
 )
 @click.option('-b', '--body', help='request body', required=True)

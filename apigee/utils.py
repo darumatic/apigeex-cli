@@ -42,7 +42,7 @@ def generate_path_str(*args):
             path /= arg
     return str(path)
 
-def handle_http_resp(func):
+def log_http_resp(func):
     def handler(*args, **kwargs):
         try: 
             resp = func(*args, **kwargs)
@@ -165,7 +165,7 @@ def touch(path):
     except FileNotFoundError:
         os.makedirs(os.path.split(path)[0])
     except FileExistsError:
-        logging.warning(f'{inspect.stack()[0][3]}; will ignore FileExistsError')
+        logging.debug(f'{inspect.stack()[0][3]}; will ignore FileExistsError')
 
 
 def write_file(content, path, fs_write=True, indent=None, eof=True):

@@ -18,6 +18,7 @@ class NotYetImplementedError(Exception):
     pass
 
 def setup_global_logger(log_file):
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
     touch(log_file)
     logging.basicConfig(
         filename=log_file,
