@@ -180,11 +180,8 @@ def list(*args, **kwargs):
 def _set_developer_status(
     username, token, org, profile, email, action, **kwargs
 ):
-    return (
-        Developers(gen_auth(username, token), org, email)
-        .set_developer_status(action)
-        .text
-    )
+    resp = Developers(gen_auth(username, token), org, email).set_developer_status(action)
+    return resp.status_code if resp.status_code == 204 else resp.text
 
 
 @developers.command(
@@ -264,7 +261,7 @@ def _update_a_developer_attribute(
 @click.option(
     '-e',
     '--email',
-    help="The developer's email. This value is used to uniquely identify the developer in Apigee Edge.",
+    help="The developer's email. This value is used to uniquely identify the developer in Apigee X.",
     required=True,
 )
 @click.option('--attribute-name', help='attribute name', required=True)

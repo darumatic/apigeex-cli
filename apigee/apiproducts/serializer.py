@@ -8,7 +8,7 @@ class ApiproductsSerializer:
             return apiproducts.text
         apiproducts = apiproducts.json()
         if format == 'json':
-            return json.dumps(apiproducts)
+            return json.dumps(apiproducts, indent=1)
         elif format == 'table':
             pass
         elif format == 'dict':
