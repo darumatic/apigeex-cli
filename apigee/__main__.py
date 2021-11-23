@@ -19,7 +19,7 @@ from apigee import (APIGEE_CLI_EXCEPTIONS_LOG_FILE,
 from apigee import __version__ as version
 from apigee.apiproducts.commands import apiproducts
 from apigee.apis.commands import apis
-from apigee.apps.commands import apps
+from apigee.developer_apps.commands import developer_apps
 from apigee.auth import auth
 from apigee.backups.commands import backups
 from apigee.caches.commands import caches
@@ -83,7 +83,7 @@ def main():
         targetservers,
         apis,
         apiproducts,
-        apps,
+        developer_apps,
         developers,
         auth,
         maskconfigs,

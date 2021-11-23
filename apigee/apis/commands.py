@@ -19,10 +19,10 @@ def apis():
 
 
 def _delete_api_proxy_revision(
-    username, password, mfa_secret, token, zonename, org, profile, name, revision_number, **kwargs
+    username, token, org, profile, name, revision_number, **kwargs
 ):
     return (
-        Apis(gen_auth(username, password, mfa_secret, token, zonename), org)
+        Apis(gen_auth(username, token), org)
         .delete_api_proxy_revision(name, revision_number)
         .text
     )
@@ -42,23 +42,21 @@ def delete_revision(*args, **kwargs):
 
 def _deploy_api_proxy_revision(
     username,
-    password,
-    mfa_secret,
     token,
-    zonename,
     org,
     profile,
     name,
     environment,
     revision_number,
-    delay=0,
+    service_account,
     override=False,
+    sequenced_rollout=False,
     **kwargs,
 ):
     return (
-        Apis(gen_auth(username, password, mfa_secret, token, zonename), org)
+        Apis(gen_auth(username, token), org)
         .deploy_api_proxy_revision(
-            name, environment, revision_number, delay=delay, override=override
+            name, environment, revision_number, service_account, override=override, sequenced_rollout=sequenced_rollout
         )
         .text
     )
@@ -73,16 +71,16 @@ def _deploy_api_proxy_revision(
 @click.option('-n', '--name', help='name', required=True)
 @click.option('-e', '--environment', help='environment', required=True)
 @click.option('-r', '--revision-number', type=click.INT, help='revision number', required=True)
-@click.option(
-    '--delay',
-    type=click.INT,
-    default=0,
-    help='Enforces a delay, measured in seconds, before the currently deployed API proxy revision is undeployed and replaced by the new revision that is being deployed. Use this setting to minimize the impact of deployment on in-flight transactions. The default value is 0.',
-)
+@click.option('-a', '--service-account', help='Google Cloud IAM service account')
 @click.option(
     '--override/--no-override',
     default=False,
-    help='Flag that specifies whether to use seamless deployment to ensure zero downtime. Set this flag to "true" to instruct Edge to deploy the new revision fully before undeploying the existing revision. Use in conjunction with the delay parameter to control when the existing revision is undeployed.',
+    help='Flag that specifies whether to use seamless deployment to ensure zero downtime. Set this flag to "true" to instruct Edge to deploy the new revision fully before undeploying the existing revision.',
+)
+@click.option(
+    '--sequenced-rollout/--no-sequenced-rollout',
+    default=False,
+    help="If set to true, a best-effort attempt will be made to roll out the routing rules corresponding to this deployment and the environment changes to add this deployment in a safe order.",
 )
 def deploy_revision(*args, **kwargs):
     console.echo(_deploy_api_proxy_revision(*args, **kwargs))

@@ -2,7 +2,7 @@ import click
 from click_option_group import MutuallyExclusiveOptionGroup, optgroup
 
 from apigee import console
-from apigee.apps.apps import Apps
+from apigee.developer_apps.apps import Apps
 from apigee.auth import common_auth_options, gen_auth
 # from apigee.cls import OptionEatAll
 from apigee.prefix import common_prefix_options
@@ -11,59 +11,56 @@ from apigee.verbose import common_verbose_options
 
 
 @click.group(help='Management APIs available for working with developer apps.')
-def apps():
+def developer_apps():
     pass
 
 
 def _create_developer_app(
-    username, password, mfa_secret, token, zonename, org, profile, name, developer, body, **kwargs
+    username, token, org, developer, body, **kwargs
 ):
     return (
-        Apps(gen_auth(username, password, mfa_secret, token, zonename), org, None)
+        Apps(gen_auth(username, token), org, None)
         .create_developer_app(developer, body)
         .text
     )
 
 
-@apps.command(
+@developer_apps.command(
     help='Creates an app associated with a developer, associates the app with an API product, and auto-generates an API key for the app to use in calls to API proxies inside the API product.'
 )
 @common_auth_options
 @common_verbose_options
 @common_silent_options
-@click.option('-n', '--name', help='name', required=True)
-@click.option('--developer', help='developer email or id', required=True)
+@click.option('-e', '--email', help='email', required=True)
+@click.option('-d', '--developer', help='developer email or id', required=True)
 @click.option('-b', '--body', help='request body', required=True)
 def create(*args, **kwargs):
     console.echo(_create_developer_app(*args, **kwargs))
 
 
 def _delete_developer_app(
-    username, password, mfa_secret, token, zonename, org, profile, name, developer, **kwargs
+    username, token, org, profile, name, developer, **kwargs
 ):
     return (
-        Apps(gen_auth(username, password, mfa_secret, token, zonename), org, name)
+        Apps(gen_auth(username, token), org, name)
         .delete_developer_app(developer)
         .text
     )
 
 
-@apps.command(help='Deletes a developer app.')
+@developer_apps.command(help='Deletes a developer app.')
 @common_auth_options
 @common_verbose_options
 @common_silent_options
 @click.option('-n', '--name', help='name', required=True)
-@click.option('--developer', help='developer email or id', required=True)
+@click.option('-d', '--developer', help='developer email or id', required=True)
 def delete(*args, **kwargs):
     console.echo(_delete_developer_app(*args, **kwargs))
 
 
 def _create_empty_developer_app(
     username,
-    password,
-    mfa_secret,
     token,
-    zonename,
     org,
     profile,
     name,
@@ -73,18 +70,18 @@ def _create_empty_developer_app(
     **kwargs
 ):
     return (
-        Apps(gen_auth(username, password, mfa_secret, token, zonename), org, name)
+        Apps(gen_auth(username, token), org, name)
         .create_empty_developer_app(developer, display_name=display_name, callback_url=callback_url)
         .text
     )
 
 
-@apps.command(help='Creates an empty developer app.')
+@developer_apps.command(help='Creates an empty developer app.')
 @common_auth_options
 @common_verbose_options
 @common_silent_options
 @click.option('-n', '--name', help='name', required=True)
-@click.option('--developer', help='developer email or id', required=True)
+@click.option('-d', '--developer', help='developer email or id', required=True)
 @click.option(
     '--display-name',
     default=None,
@@ -100,55 +97,51 @@ def create_empty(*args, **kwargs):
 
 
 def _get_developer_app_details(
-    username, password, mfa_secret, token, zonename, org, profile, name, developer, **kwargs
+    username, token, org, profile, name, developer, **kwargs
 ):
     return (
-        Apps(gen_auth(username, password, mfa_secret, token, zonename), org, name)
+        Apps(gen_auth(username, token), org, name)
         .get_developer_app_details(developer)
         .text
     )
 
 
-@apps.command(
+@developer_apps.command(
     help='Get the profile of a specific developer app. All times in the response are UNIX times. Note that the response contains a top-level attribute named accessType that is no longer used by Apigee.'
 )
 @common_auth_options
 @common_verbose_options
 @common_silent_options
 @click.option('-n', '--name', help='name', required=True)
-@click.option('--developer', help='developer email or id', required=True)
+@click.option('-d', '--developer', help='developer email or id', required=True)
 def get(*args, **kwargs):
     console.echo(_get_developer_app_details(*args, **kwargs))
 
 
 def _list_developer_apps(
     username,
-    password,
-    mfa_secret,
     token,
-    zonename,
     org,
     profile,
     developer,
-    prefix=None,
     expand=False,
     count=1000,
     startkey="",
     **kwargs
 ):
     return Apps(
-        gen_auth(username, password, mfa_secret, token, zonename), org, None
-    ).list_developer_apps(developer, prefix=prefix, expand=expand, count=count, startkey=startkey)
+        gen_auth(username, token), org, None
+    ).list_developer_apps(developer, expand=expand, count=count, startkey=startkey)
 
 
-@apps.command(
+@developer_apps.command(
     help="Lists all apps created by a developer in an organization, and optionally provides an expanded view of the apps. All time values in the response are UNIX times. You can specify either the developer's email address or Edge ID."
 )
 @common_auth_options
 @common_verbose_options
 @common_silent_options
 @common_prefix_options
-@click.option('--developer', help='developer email or id', required=True)
+@click.option('-d', '--developer', help='developer email or id', required=True)
 @click.option(
     '--expand/--no-expand',
     default=False,
@@ -188,10 +181,7 @@ def list(*args, **kwargs):
 
 def _create_a_consumer_key_and_secret(
     username,
-    password,
-    mfa_secret,
     token,
-    zonename,
     org,
     profile,
     name,
@@ -206,7 +196,7 @@ def _create_a_consumer_key_and_secret(
     **kwargs
 ):
     return (
-        Apps(gen_auth(username, password, mfa_secret, token, zonename), org, name)
+        Apps(gen_auth(username, token), org, name)
         .create_a_consumer_key_and_secret(
             developer,
             consumer_key=consumer_key,
@@ -221,14 +211,14 @@ def _create_a_consumer_key_and_secret(
     )
 
 
-@apps.command(
+@developer_apps.command(
     help='Creates a custom consumer key and secret for a developer app. This is particularly useful if you want to migrate existing consumer keys/secrets to Edge from another system. Consumer keys and secrets can contain letters, numbers, underscores, and hyphens. No other special characters are allowed.'
 )
 @common_auth_options
 @common_verbose_options
 @common_silent_options
 @click.option('-n', '--name', help='app name', required=True)
-@click.option('--developer', help='developer email or id', required=True)
+@click.option('-d', '--developer', help='developer email or id', required=True)
 @optgroup.group(
     'consumerKey options', cls=MutuallyExclusiveOptionGroup, help='The consumerKey options'
 )
@@ -276,15 +266,15 @@ def create_creds(*args, **kwargs):
 #     pass
 
 
-def _restore_app(username, password, mfa_secret, token, zonename, org, profile, file, **kwargs):
+def _restore_app(username, token, org, profile, file, **kwargs):
     return (
-        Apps(gen_auth(username, password, mfa_secret, token, zonename), org, None)
+        Apps(gen_auth(username, token), org, None)
         .restore_app(file)
         .text
     )
 
 
-@apps.command(help='Restore developer app from a file.')
+@developer_apps.command(help='Restore developer app from a file.')
 @common_auth_options
 @common_silent_options
 @common_verbose_options

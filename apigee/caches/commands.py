@@ -16,10 +16,10 @@ def caches():
 
 
 def _clear_all_cache_entries(
-    username, password, mfa_secret, token, zonename, org, profile, name, environment, **kwargs
+    username, token, org, profile, name, environment, **kwargs
 ):
     return (
-        Caches(gen_auth(username, password, mfa_secret, token, zonename), org, name)
+        Caches(gen_auth(username, token), org, name)
         .clear_all_cache_entries(environment)
         .text
     )
@@ -69,10 +69,10 @@ def clear_entry(*args, **kwargs):
 
 
 def _create_a_cache_in_an_environment(
-    username, password, mfa_secret, token, zonename, org, profile, name, environment, body, **kwargs
+    username, token, org, profile, name, environment, body, **kwargs
 ):
     return (
-        Caches(gen_auth(username, password, mfa_secret, token, zonename), org, name)
+        Caches(gen_auth(username, token), org, name)
         .create_a_cache_in_an_environment(environment, body)
         .text
     )
@@ -115,19 +115,15 @@ def get(*args, **kwargs):
 
 def _list_caches_in_an_environment(
     username,
-    password,
-    mfa_secret,
     token,
-    zonename,
     org,
     profile,
     environment,
-    prefix=None,
     **kwargs
 ):
     return Caches(
-        gen_auth(username, password, mfa_secret, token, zonename), org, None
-    ).list_caches_in_an_environment(environment, prefix=prefix)
+        gen_auth(username, token), org, None
+    ).list_caches_in_an_environment(environment)
 
 
 @caches.command(help='List caches in an environment.')

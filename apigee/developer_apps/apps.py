@@ -7,7 +7,7 @@ from requests.exceptions import HTTPError
 from tqdm import tqdm
 
 from apigee import APIGEE_ADMIN_API_URL, auth, console
-from apigee.apps.serializer import AppsSerializer
+from apigee.developer_apps.serializer import AppsSerializer
 
 CREATE_DEVELOPER_APP_PATH = '{api_url}/v1/organizations/{org}/developers/{developer}/apps'
 DELETE_DEVELOPER_APP_PATH = '{api_url}/v1/organizations/{org}/developers/{developer}/apps/{name}'
@@ -69,7 +69,6 @@ class Apps:
         )
         body = json.loads(request_body)
         resp = requests.post(uri, headers=hdrs, json=body)
-        resp.raise_for_status()
         return resp
 
     def delete_developer_app(self, developer):
@@ -81,7 +80,6 @@ class Apps:
         )
         hdrs = auth.set_header(self._auth, headers={'Accept': 'application/json'})
         resp = requests.delete(uri, headers=hdrs)
-        resp.raise_for_status()
         return resp
 
     def create_empty_developer_app(self, developer, display_name="", callback_url=""):
@@ -104,7 +102,8 @@ class Apps:
             del body['callbackUrl']
         # body = {k: v for k, v in body.items() if v}
         resp = requests.post(uri, headers=hdrs, json=body)
-        resp.raise_for_status()
+        if resp.status_code >= 400:
+            return resp
         self.delete_key_for_a_developer_app(developer, resp.json()['credentials'][0]['consumerKey'])
         return self.get_developer_app_details(developer)
 
@@ -117,11 +116,10 @@ class Apps:
         )
         hdrs = auth.set_header(self._auth, headers={'Accept': 'application/json'})
         resp = requests.get(uri, headers=hdrs)
-        resp.raise_for_status()
         return resp
 
     def list_developer_apps(
-        self, developer, prefix=None, expand=False, count=1000, startkey="", format='json'
+        self, developer, expand=False, count=1000, startkey="", format='json'
     ):
         uri = LIST_DEVELOPER_APPS_PATH.format(
             api_url=APIGEE_ADMIN_API_URL, org=self._org_name, developer=developer
@@ -132,8 +130,7 @@ class Apps:
             uri += f'?count={count}&startKey={startkey}'
         hdrs = auth.set_header(self._auth, headers={'Accept': 'application/json'})
         resp = requests.get(uri, headers=hdrs)
-        resp.raise_for_status()
-        return AppsSerializer().serialize_details(resp, format, prefix=prefix)
+        return AppsSerializer().serialize_details(resp, format)
 
     def list_apps_for_all_developers(
         self,
@@ -146,7 +143,7 @@ class Apps:
         progress_bar=False,
     ):
         apps = {}
-        for developer in list_of_developers:
+        for developer in tqdm(list_of_developers) if progress_bar else list_of_developers:
             apps[developer] = self.list_developer_apps(
                 developer,
                 prefix=prefix,
@@ -155,7 +152,7 @@ class Apps:
                 startkey=startkey,
                 format=format,
             )
-        return apps
+        return json.dumps(apps, indent=2)
 
     def delete_key_for_a_developer_app(self, developer, consumer_key):
         uri = DELETE_KEY_FOR_A_DEVELOPER_APP_PATH.format(
@@ -167,7 +164,6 @@ class Apps:
         )
         hdrs = auth.set_header(self._auth, {'Accept': 'application/json'})
         resp = requests.delete(uri, headers=hdrs)
-        resp.raise_for_status()
         return resp
 
     def create_a_consumer_key_and_secret(
@@ -206,12 +202,13 @@ class Apps:
             consumer_key += key_suffix
         body = {'consumerKey': consumer_key, 'consumerSecret': consumer_secret}
         resp = requests.post(uri, headers=hdrs, json=body)
-        resp.raise_for_status()
+        if resp.status_code >= 400:
+            return resp
         if products:
-            console.echo(resp.text)
+            console.echo(resp.json())
             consumer_key = resp.json()['consumerKey']
             request_body = json.dumps(
-                {'apiProducts': products, 'attributes': resp.json()['attributes']}
+                {'apiProducts': products, 'attributes': resp.json().get('attributes', [])}
             )
             console.echo(f'Adding API Products {products} to consumerKey {consumer_key}')
             return self.add_api_product_to_key(developer, consumer_key, request_body)
@@ -230,7 +227,6 @@ class Apps:
         )
         body = json.loads(request_body)
         resp = requests.post(uri, headers=hdrs, json=body)
-        resp.raise_for_status()
         return resp
 
     def restore_app(self, file):
@@ -244,8 +240,12 @@ class Apps:
         request_body['callbackUrl'] = app.get('callbackUrl')
         request_body = {k: v for k, v in request_body.items() if v}
         resp = self.create_developer_app(app['developerId'], json.dumps(request_body))
+        if resp.status_code >= 400:
+            return resp
         consumer_key = resp.json()['credentials'][0]['consumerKey']
-        self.delete_key_for_a_developer_app(app['developerId'], consumer_key)
+        resp = self.delete_key_for_a_developer_app(app['developerId'], consumer_key)
+        if resp.status_code >= 400:
+            return resp
         if app['credentials']:
             for cred in app['credentials']:
                 consumer_key = cred['consumerKey']

@@ -22,7 +22,7 @@ from apigee.utils import (extract_zip, is_dir, make_dirs, path_exists,
 DELETE_API_PROXY_REVISION_PATH = (
     '{api_url}/v1/organizations/{org}/apis/{api_name}/revisions/{revision_number}'
 )
-DEPLOY_API_PROXY_REVISION_PATH = '{api_url}/v1/organizations/{org}/environments/{environment}/apis/{api_name}/revisions/{revision_number}/deployments?delay={delay}'
+DEPLOY_API_PROXY_REVISION_PATH = '{api_url}/v1/organizations/{org}/environments/{environment}/apis/{api_name}/revisions/{revision_number}/deployments?override={override}&sequencedRollout={sequenced_rollout}&serviceAccount={service_account}'
 EXPORT_API_PROXY_PATH = (
     '{api_url}/v1/organizations/{org}/apis/{api_name}/revisions/{revision_number}?format=bundle'
 )
@@ -55,11 +55,10 @@ class Apis(InformalApisInterface, InformalPullInterface):
         )
         hdrs = auth.set_header(self._auth, headers={'Accept': 'application/json'})
         resp = requests.delete(uri, headers=hdrs)
-        resp.raise_for_status()
         return resp
 
     def deploy_api_proxy_revision(
-        self, api_name, environment, revision_number, delay=0, override=False
+        self, api_name, environment, revision_number, service_account, override=False, sequenced_rollout=False
     ):
         uri = DEPLOY_API_PROXY_REVISION_PATH.format(
             api_url=APIGEE_ADMIN_API_URL,
@@ -67,7 +66,9 @@ class Apis(InformalApisInterface, InformalPullInterface):
             environment=environment,
             api_name=api_name,
             revision_number=revision_number,
-            delay=delay,
+            override=override,
+            sequenced_rollout=sequenced_rollout,
+            service_account=service_account
         )
         hdrs = auth.set_header(
             self._auth,
@@ -76,8 +77,7 @@ class Apis(InformalApisInterface, InformalPullInterface):
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
         )
-        resp = requests.post(uri, headers=hdrs, data={'override': 'true' if override else 'false'})
-        resp.raise_for_status()
+        resp = requests.post(uri, headers=hdrs)
         return resp
 
     def delete_undeployed_revisions(self, api_name, save_last=0, dry_run=False):

@@ -71,7 +71,6 @@ class Caches:
             headers={'Accept': 'application/json', 'Content-Type': 'application/octet-stream'},
         )
         resp = requests.post(uri, headers=hdrs)
-        resp.raise_for_status()
         return resp
 
     def clear_a_cache_entry(self, environment, entry):
@@ -87,7 +86,6 @@ class Caches:
             headers={'Accept': 'application/json', 'Content-Type': 'application/octet-stream'},
         )
         resp = requests.post(uri, headers=hdrs)
-        resp.raise_for_status()
         return resp
 
     def create_a_cache_in_an_environment(self, environment, request_body):
@@ -102,7 +100,6 @@ class Caches:
         )
         body = json.loads(request_body)
         resp = requests.post(uri, headers=hdrs, json=body)
-        resp.raise_for_status()
         return resp
 
     def get_information_about_a_cache(self, environment):
@@ -114,17 +111,15 @@ class Caches:
         )
         hdrs = auth.set_header(self._auth, headers={'Accept': 'application/json'})
         resp = requests.get(uri, headers=hdrs)
-        resp.raise_for_status()
         return resp
 
-    def list_caches_in_an_environment(self, environment, prefix=None, format='json'):
+    def list_caches_in_an_environment(self, environment, format='json'):
         uri = LIST_CACHES_IN_AN_ENVIRONMENT_PATH.format(
             api_url=APIGEE_ADMIN_API_URL, org=self._org_name, environment=environment
         )
         hdrs = auth.set_header(self._auth, headers={'Accept': 'application/json'})
         resp = requests.get(uri, headers=hdrs)
-        resp.raise_for_status()
-        return CachesSerializer().serialize_details(resp, format, prefix=prefix)
+        return CachesSerializer().serialize_details(resp, format)
 
     def update_a_cache_in_an_environment(self, environment, request_body):
         uri = UPDATE_A_CACHE_IN_AN_ENVIRONMENT_PATH.format(
@@ -138,7 +133,6 @@ class Caches:
         )
         body = json.loads(request_body)
         resp = requests.put(uri, headers=hdrs, json=body)
-        resp.raise_for_status()
         return resp
 
     def delete_a_cache(self, environment):
@@ -150,7 +144,6 @@ class Caches:
         )
         hdrs = auth.set_header(self._auth, headers={'Accept': 'application/json'})
         resp = requests.delete(uri, headers=hdrs)
-        resp.raise_for_status()
         return resp
 
     def push_cache(self, environment, file):

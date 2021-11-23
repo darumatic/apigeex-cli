@@ -69,9 +69,6 @@ def test_update_all_attrs():
     res = runner.invoke(update_all_attrs, ["-e", test_dev["email"], "-b", body])
     assert res.output is not None and "error" not in res.output and "cli_test" in res.output and "env" in res.output
 
-def test_get_developer_by_app():
-    pass
-
 def test_delete_developer():
     res = runner.invoke(delete, ["-e", test_dev["email"]])
     assert res.output is not None and "error" not in res.output

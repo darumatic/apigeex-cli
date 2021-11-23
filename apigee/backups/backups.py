@@ -9,7 +9,7 @@ from tqdm import tqdm
 from apigee import APIGEE_ADMIN_API_URL, auth, console
 from apigee.apiproducts.apiproducts import Apiproducts
 from apigee.apis.apis import Apis
-from apigee.apps.apps import Apps
+from apigee.developer_apps.apps import Apps
 from apigee.caches.caches import Caches
 from apigee.developers.developers import Developers
 from apigee.exceptions import InvalidApisError, NotYetImplementedError

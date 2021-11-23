@@ -2,15 +2,13 @@ import json
 
 
 class CachesSerializer:
-    def serialize_details(self, caches, format, prefix=None):
+    def serialize_details(self, caches, format):
         resp = caches
         if format == 'text':
             return caches.text
         caches = caches.json()
-        if prefix:
-            caches = [cache for cache in caches if cache.startswith(prefix)]
         if format == 'json':
-            return json.dumps(caches)
+            return json.dumps(caches, indent=2)
         elif format == 'table':
             pass
         elif format == 'dict':
