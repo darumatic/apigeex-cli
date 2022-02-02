@@ -57,7 +57,8 @@ class Deployments:
         )
         hdrs = auth.set_header(self._auth, headers={'Accept': 'application/json'})
         resp = requests.get(uri, headers=hdrs)
-        resp.raise_for_status()
+        if resp.status_code >= 400:
+            return resp
         if formatted:
             if revision_name_only:
                 return DeploymentsSerializer().serialize_details(

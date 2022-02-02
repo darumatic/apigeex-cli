@@ -91,16 +91,15 @@ class Keyvaluemaps:
         for idx, entry in enumerate(tqdm(deleted_keys, **TQDM_KWARGS('Deleting'))):
             self.delete_keyvaluemap_entry_in_an_environment(environment, entry['name'])
 
-    def create_keyvaluemap_in_an_environment(self, environment, request_body):
+    def create_keyvaluemap_in_an_environment(self, environment):
         uri = CREATE_KEYVALUEMAP_IN_AN_ENVIRONMENT_PATH.format(
             api_url=APIGEE_ADMIN_API_URL, org=self._org_name, environment=environment
         )
         hdrs = auth.set_header(
             self._auth, headers={'Accept': 'application/json', 'Content-Type': 'application/json'}
         )
-        body = json.loads(request_body)
-        resp = requests.post(uri, headers=hdrs, json=body)
-        resp.raise_for_status()
+        body = json.dumps({"name": self._map_name, "encrypted": True})
+        resp = requests.post(uri, headers=hdrs, data=body)
         return resp
 
     def delete_keyvaluemap_from_an_environment(self, environment):
@@ -112,7 +111,6 @@ class Keyvaluemaps:
         )
         hdrs = auth.set_header(self._auth, headers={'Accept': 'application/json'})
         resp = requests.delete(uri, headers=hdrs)
-        resp.raise_for_status()
         return resp
 
     def delete_keyvaluemap_entry_in_an_environment(self, environment, entry_name):
@@ -153,14 +151,13 @@ class Keyvaluemaps:
         resp.raise_for_status()
         return resp
 
-    def list_keyvaluemaps_in_an_environment(self, environment, prefix=None, format='json'):
+    def list_keyvaluemaps_in_an_environment(self, environment, format='json'):
         uri = LIST_KEYVALUEMAPS_IN_AN_ENVIRONMENT_PATH.format(
             api_url=APIGEE_ADMIN_API_URL, org=self._org_name, environment=environment
         )
         hdrs = auth.set_header(self._auth, headers={'Accept': 'application/json'})
         resp = requests.get(uri, headers=hdrs)
-        resp.raise_for_status()
-        return KeyvaluemapsSerializer().serialize_details(resp, format, prefix=prefix)
+        return KeyvaluemapsSerializer().serialize_details(resp, format)
 
     def update_keyvaluemap_in_an_environment(self, environment, request_body):
         uri = UPDATE_KEYVALUEMAP_IN_AN_ENVIRONMENT_PATH.format(
@@ -174,7 +171,6 @@ class Keyvaluemaps:
         )
         body = json.loads(request_body)
         resp = requests.post(uri, headers=hdrs, json=body)
-        resp.raise_for_status()
         return resp
 
     def create_an_entry_in_an_environment_scoped_kvm(self, environment, entry_name, entry_value):
@@ -189,7 +185,6 @@ class Keyvaluemaps:
         )
         body = {'name': entry_name, 'value': entry_value}
         resp = requests.post(uri, headers=hdrs, json=body)
-        resp.raise_for_status()
         return resp
 
     def update_an_entry_in_an_environment_scoped_kvm(self, environment, entry_name, updated_value):
@@ -219,7 +214,6 @@ class Keyvaluemaps:
         )
         hdrs = auth.set_header(self._auth, headers={'Accept': 'application/json'})
         resp = requests.get(uri, headers=hdrs)
-        resp.raise_for_status()
         # return KeyvaluemapsSerializer().serialize_details(resp, 'json', prefix=prefix)
         return resp
 

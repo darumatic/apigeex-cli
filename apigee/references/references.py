@@ -56,14 +56,15 @@ class References:
     def ref_name(self, value):
         self._ref_name = value
 
-    def list_all_references(self, environment, prefix=None, format='json'):
+    def list_all_references(self, environment, format='json'):
         uri = LIST_ALL_REFERENCES_PATH.format(
             api_url=APIGEE_ADMIN_API_URL, org_name=self._org_name, environment=environment
         )
         hdrs = auth.set_header(self._auth, headers={'Accept': 'application/json'})
         resp = requests.get(uri, headers=hdrs)
-        resp.raise_for_status()
-        return ReferencesSerializer().serialize_details(resp, format, prefix=prefix)
+        if resp.status_code >= 400:
+            return resp.text
+        return ReferencesSerializer().serialize_details(resp, format)
 
     def get_reference(self, environment):
         uri = GET_REFERENCE_PATH.format(
@@ -74,14 +75,40 @@ class References:
         )
         hdrs = auth.set_header(self._auth, headers={'Accept': 'application/json'})
         resp = requests.get(uri, headers=hdrs)
-        resp.raise_for_status()
         return resp
 
-    def delete_reference(self):
-        pass
+    def delete_reference(self, environment):
+        uri = DELETE_REFERENCE_PATH.format(
+            api_url=APIGEE_ADMIN_API_URL,
+            org_name=self._org_name,
+            environment=environment,
+            ref_name=self._ref_name,
+        )
+        hdrs = auth.set_header(self._auth, headers={'Accept': 'application/json'})
+        resp = requests.delete(uri, headers=hdrs)
+        return resp
 
-    def create_reference(self):
-        pass
+    def create_reference(self, environment, description, resource_type, refers):
+        uri = CREATE_REFERENCE_PATH.format(
+            api_url=APIGEE_ADMIN_API_URL,
+            org_name=self._org_name,
+            environment=environment,
+        )
+        hdrs = auth.set_header(self._auth, headers={'Content-Type': 'application/json'})
+        payload = {"name": self._ref_name, "refers": refers, "resourceType": resource_type}
+        payload = json.dumps(payload if description is None else {"description": description, **payload})
+        resp = requests.post(uri, headers=hdrs, data=payload)
+        return resp
 
-    def update_reference(self):
-        pass
+    def update_reference(self, environment, description, resource_type, refers):
+        uri = UPDATE_REFERENCE_PATH.format(
+            api_url=APIGEE_ADMIN_API_URL,
+            org_name=self._org_name,
+            environment=environment,
+            ref_name=self._ref_name
+        )
+        hdrs = auth.set_header(self._auth, headers={'Content-Type': 'application/json'})
+        payload = {"name": self._ref_name, "refers": refers, "resourceType": resource_type}
+        payload = json.dumps(payload if description is None else {"description": description, **payload})
+        resp = requests.put(uri, headers=hdrs, data=payload)
+        return resp

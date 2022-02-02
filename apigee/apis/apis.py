@@ -30,7 +30,6 @@ GET_API_PROXY_PATH = '{api_url}/v1/organizations/{org}/apis/{api_name}'
 LIST_API_PROXIES_PATH = '{api_url}/v1/organizations/{org}/apis'
 LIST_API_PROXY_REVISIONS_PATH = '{api_url}/v1/organizations/{org}/apis/{api_name}/revisions'
 UNDEPLOY_API_PROXY_REVISION_PATH = '{api_url}/v1/organizations/{org}/environments/{environment}/apis/{api_name}/revisions/{revision_number}/deployments'
-FORCE_UNDEPLOY_API_PROXY_REVISION_PATH = '{api_url}/v1/organizations/{org}/apis/{api_name}/revisions/{revision_number}/deployments?action=undeploy&env={environment}&force=true'
 
 
 class Apis(InformalApisInterface, InformalPullInterface):
@@ -97,7 +96,9 @@ class Apis(InformalApisInterface, InformalPullInterface):
 
         def _func(revision):
             console.echo(f'Deleting revison {revision}')
-            self.delete_api_proxy_revision(api_name, revision)
+            resp = self.delete_api_proxy_revision(api_name, revision)
+            if resp.status_code >= 400:
+                logging.error(resp.text)
 
         return run_func_on_iterable(undeployed, _func)
 
@@ -110,7 +111,8 @@ class Apis(InformalApisInterface, InformalPullInterface):
         )
         hdrs = auth.set_header(self._auth, headers={'Accept': 'application/json'})
         resp = requests.get(uri, headers=hdrs)
-        resp.raise_for_status()
+        if resp.status_code >= 400:
+            return resp
         if fs_write:
             write_zip(output_file, resp.content)
         return resp
@@ -121,15 +123,13 @@ class Apis(InformalApisInterface, InformalPullInterface):
         )
         hdrs = auth.set_header(self._auth, headers={'Accept': 'application/json'})
         resp = requests.get(uri, headers=hdrs)
-        resp.raise_for_status()
         return resp
 
-    def list_api_proxies(self, prefix=None, format='json'):
+    def list_api_proxies(self, format='json'):
         uri = LIST_API_PROXIES_PATH.format(api_url=APIGEE_ADMIN_API_URL, org=self._org_name)
         hdrs = auth.set_header(self._auth, headers={'Accept': 'application/json'})
         resp = requests.get(uri, headers=hdrs)
-        resp.raise_for_status()
-        return ApisSerializer().serialize_details(resp, format, prefix=prefix)
+        return ApisSerializer().serialize_details(resp, format)
 
     def list_api_proxy_revisions(self, api_name):
         uri = LIST_API_PROXY_REVISIONS_PATH.format(
@@ -137,7 +137,6 @@ class Apis(InformalApisInterface, InformalPullInterface):
         )
         hdrs = auth.set_header(self._auth, headers={'Accept': 'application/json'})
         resp = requests.get(uri, headers=hdrs)
-        resp.raise_for_status()
         return resp
 
     def undeploy_api_proxy_revision(self, api_name, environment, revision_number):
@@ -150,24 +149,11 @@ class Apis(InformalApisInterface, InformalPullInterface):
         )
         hdrs = auth.set_header(self._auth, headers={'Accept': 'application/json'})
         resp = requests.delete(uri, headers=hdrs)
-        resp.raise_for_status()
         return resp
 
-    def force_undeploy_api_proxy_revision(self, api_name, environment, revision_number):
-        uri = FORCE_UNDEPLOY_API_PROXY_REVISION_PATH.format(
-            api_url=APIGEE_ADMIN_API_URL,
-            org=self._org_name,
-            api_name=api_name,
-            revision_number=revision_number,
-            environment=environment,
-        )
-        hdrs = auth.set_header(self._auth, headers={'Accept': 'application/json'})
-        resp = requests.delete(uri, headers=hdrs)
-        resp.raise_for_status()
-        return resp
 
     def get_apiproxy_files(self, directory):
-        return run_func_on_dir_files(str(Path(directory) / 'apiproxy'), lambda f: f)
+        return run_func_on_dir_files(str(Path(directory) / 'apiproxy'), lambda f: f, "**/*.xml")
 
     def get_keyvaluemap_dependencies(self, files):
         def _func(f, _state):
@@ -238,6 +224,8 @@ class Apis(InformalApisInterface, InformalPullInterface):
                 if name and name not in _state:
                     _state.add(name)
                     return name
+            except AttributeError:
+                return
             except Exception as e:
                 logging.warning(f'{e}; file={f}', exc_info=True)
 
@@ -261,7 +249,7 @@ class Apis(InformalApisInterface, InformalPullInterface):
 
         return run_func_on_iterable(caches, _func)
 
-    def pull(self, api_name, dependencies=[], force=False, prefix=None, basepath=None):
+    def pull(self, api_name, dependencies=[], force=False):
         dependencies.append(api_name)
         make_dirs(self._work_tree)
         self.apiproxy_dir = api_name
@@ -270,12 +258,14 @@ class Apis(InformalApisInterface, InformalPullInterface):
         export = self.export_api_proxy(
             api_name, self._revision_number, fs_write=True, output_file=self._zip_file
         )
+        if export.status_code >= 400:
+            return logging.error(export.text)
         make_dirs(self._apiproxy_dir)
         extract_zip(self._zip_file, self._apiproxy_dir)
         os.remove(self._zip_file)
         files = self.get_apiproxy_files(self._apiproxy_dir)
         for resource_type in ('keyvaluemap', 'targetserver', 'cache'):
-            self._Apis__get_and_export(
+            self.__get_and_export(
                 resource_type, files, self._environment, dependencies=dependencies, force=force
             )
         return export, dependencies

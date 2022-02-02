@@ -71,7 +71,7 @@ def _deploy_api_proxy_revision(
 @click.option('-n', '--name', help='name', required=True)
 @click.option('-e', '--environment', help='environment', required=True)
 @click.option('-r', '--revision-number', type=click.INT, help='revision number', required=True)
-@click.option('-a', '--service-account', help='Google Cloud IAM service account')
+@click.option('-a', '--service-account', help='Google Cloud IAM service account', required=True)
 @click.option(
     '--override/--no-override',
     default=False,
@@ -88,10 +88,7 @@ def deploy_revision(*args, **kwargs):
 
 def _delete_undeployed_revisions(
     username,
-    password,
-    mfa_secret,
     token,
-    zonename,
     org,
     profile,
     name,
@@ -100,7 +97,7 @@ def _delete_undeployed_revisions(
     **kwargs,
 ):
     return Apis(
-        gen_auth(username, password, mfa_secret, token, zonename), org
+        gen_auth(username, token), org
     ).delete_undeployed_revisions(name, save_last=save_last, dry_run=dry_run)
 
 
@@ -126,10 +123,7 @@ def clean(*args, **kwargs):
 
 def _export_api_proxy(
     username,
-    password,
-    mfa_secret,
     token,
-    zonename,
     org,
     profile,
     name,
@@ -138,10 +132,10 @@ def _export_api_proxy(
     output_file=None,
     **kwargs,
 ):
-    return Apis(gen_auth(username, password, mfa_secret, token, zonename), org).export_api_proxy(
+    return Apis(gen_auth(username, token), org).export_api_proxy(
         name,
         revision_number,
-        fs_write=True,
+        fs_write=fs_write,
         output_file=output_file if output_file else f'{name}.zip',
     )
 
@@ -161,9 +155,9 @@ def export(*args, **kwargs):
     _export_api_proxy(*args, **kwargs)
 
 
-def _get_api_proxy(username, password, mfa_secret, token, zonename, org, profile, name, **kwargs):
+def _get_api_proxy(username, token, org, profile, name, **kwargs):
     return (
-        Apis(gen_auth(username, password, mfa_secret, token, zonename), org)
+        Apis(gen_auth(username, token), org)
         .get_api_proxy(name)
         .text
     )
@@ -182,19 +176,13 @@ def get(*args, **kwargs):
 
 def _list_api_proxies(
     username,
-    password,
-    mfa_secret,
     token,
-    zonename,
     org,
     profile,
-    prefix=None,
     format='json',
     **kwargs,
 ):
-    return Apis(gen_auth(username, password, mfa_secret, token, zonename), org).list_api_proxies(
-        prefix=prefix
-    )
+    return Apis(gen_auth(username, token), org).list_api_proxies(format=format)
 
 
 @apis.command(
@@ -209,10 +197,10 @@ def list(*args, **kwargs):
 
 
 def _list_api_proxy_revisions(
-    username, password, mfa_secret, token, zonename, org, profile, name, **kwargs
+    username, token, org, profile, name, **kwargs
 ):
     return (
-        Apis(gen_auth(username, password, mfa_secret, token, zonename), org)
+        Apis(gen_auth(username, token), org)
         .list_api_proxy_revisions(name)
         .text
     )
@@ -229,10 +217,7 @@ def list_revisions(*args, **kwargs):
 
 def _undeploy_api_proxy_revision(
     username,
-    password,
-    mfa_secret,
     token,
-    zonename,
     org,
     profile,
     name,
@@ -241,7 +226,7 @@ def _undeploy_api_proxy_revision(
     **kwargs,
 ):
     return (
-        Apis(gen_auth(username, password, mfa_secret, token, zonename), org)
+        Apis(gen_auth(username, token), org)
         .undeploy_api_proxy_revision(name, environment, revision_number)
         .text
     )
@@ -258,43 +243,9 @@ def undeploy_revision(*args, **kwargs):
     console.echo(_undeploy_api_proxy_revision(*args, **kwargs))
 
 
-def _force_undeploy_api_proxy_revision(
-    username,
-    password,
-    mfa_secret,
-    token,
-    zonename,
-    org,
-    profile,
-    name,
-    environment,
-    revision_number,
-    **kwargs,
-):
-    return (
-        Apis(gen_auth(username, password, mfa_secret, token, zonename), org)
-        .force_undeploy_api_proxy_revision(name, environment, revision_number)
-        .text
-    )
-
-
-@apis.command(help='Force the undeployment of the API proxy that is partially deployed.')
-@common_auth_options
-@common_verbose_options
-@common_silent_options
-@click.option('-n', '--name', help='name', required=True)
-@click.option('-e', '--environment', help='environment', required=True)
-@click.option('-r', '--revision-number', type=click.INT, help='revision number', required=True)
-def force_undeploy_revision(*args, **kwargs):
-    console.echo(_force_undeploy_api_proxy_revision(*args, **kwargs))
-
-
 def _pull(
     username,
-    password,
-    mfa_secret,
     token,
-    zonename,
     org,
     profile,
     name,
@@ -303,17 +254,15 @@ def _pull(
     work_tree,
     dependencies=[],
     force=False,
-    prefix=None,
-    basepath=None,
     **kwargs,
 ):
     return Apis(
-        gen_auth(username, password, mfa_secret, token, zonename),
+        gen_auth(username, token),
         org,
         revision_number,
         environment,
         work_tree=work_tree,
-    ).pull(name, force=force, prefix=prefix, basepath=basepath)
+    ).pull(name, dependencies=dependencies, force=force)
 
 
 @apis.command(
@@ -329,46 +278,34 @@ def _pull(
     '--work-tree', help='set the path to the working tree (defaults to current working directory)'
 )
 @click.option('--force/--no-force', '-f/-F', default=False, help='force write files')
-@click.option(
-    '--prefix',
-    help='prefix to prepend to names. WARNING: this is not foolproof. make sure to review the changes.',
-    hidden=True,
-)
-@click.option(
-    '-b', '--basepath', help='set default basepath in apiproxy/proxies/default.xml', hidden=True
-)
 def pull(*args, **kwargs):
     _pull(*args, **kwargs)
 
 
 def _deploy(
     username,
-    password,
-    mfa_secret,
     token,
-    zonename,
     org,
     profile,
+    environment,
     name,
+    service_account,
     directory,
     import_only,
     seamless_deploy,
-    environment,
     **kwargs,
 ):
     return deploy_tool(
         Struct(
             username=username,
-            password=password,
             directory=directory,
             org=org,
             name=name,
             environment=environment,
             import_only=import_only,
             seamless_deploy=seamless_deploy,
-            mfa_secret=mfa_secret,
-            token=token,
-            zonename=zonename,
+            service_account=service_account,
+            token=token
         )
     )
 
@@ -393,6 +330,7 @@ These files are Copyright 2015 Apigee Corporation, released under the Apache2 Li
 @common_silent_options
 @click.option('-e', '--environment', help='environment', required=True)
 @click.option('-n', '--name', help='name', required=True)
+@click.option('-a', '--service-account', help='Google Cloud IAM service account', required=True)
 @click.option(
     '-d',
     '--directory',

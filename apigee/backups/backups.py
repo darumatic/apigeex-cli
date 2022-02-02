@@ -363,7 +363,7 @@ class Backups:
         for role_name in self.snapshot_data.userroles:
             self.download_users_for_a_role(role_name)
             self.download_resource_permissions(role_name)
-            self._Backups__progress_callback(desc='User Roles')
+            self.__progress_callback(desc='User Roles')
 
     def __calculate_snapshot_size(self):
         count = 0
@@ -390,7 +390,7 @@ class Backups:
                 console.echo(f'Retrieving {api} listing... ', end='', flush=True)
             getattr(self, f'download_{api}_snapshot')()
             console.echo('Done')
-        self.snapshot_size = self._Backups__calculate_snapshot_size()
+        self.snapshot_size = self.__calculate_snapshot_size()
 
     def take_snapshot(self):
         self.get_snapshots()

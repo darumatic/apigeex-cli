@@ -22,11 +22,11 @@ def keyvaluemaps():
 
 
 def _create_keyvaluemap_in_an_environment(
-    username, password, mfa_secret, token, zonename, org, profile, name, environment, body, **kwargs
+    username, token, org, profile, environment, name, **kwargs
 ):
     return (
-        Keyvaluemaps(gen_auth(username, password, mfa_secret, token, zonename), org, name)
-        .create_keyvaluemap_in_an_environment(environment, body)
+        Keyvaluemaps(gen_auth(username, token), org, name)
+        .create_keyvaluemap_in_an_environment(environment)
         .text
     )
 
@@ -35,18 +35,17 @@ def _create_keyvaluemap_in_an_environment(
 @common_auth_options
 @common_silent_options
 @common_verbose_options
-@click.option('-n', '--name', help='name', required=True)
 @click.option('-e', '--environment', help='environment', required=True)
-@click.option('-b', '--body', help='request body', required=True)
+@click.option('-n', '--name', help='name', required=True)
 def create(*args, **kwargs):
     console.echo(_create_keyvaluemap_in_an_environment(*args, **kwargs))
 
 
 def _delete_keyvaluemap_from_an_environment(
-    username, password, mfa_secret, token, zonename, org, profile, name, environment, **kwargs
+    username, token, org, profile, name, environment, **kwargs
 ):
     return (
-        Keyvaluemaps(gen_auth(username, password, mfa_secret, token, zonename), org, name)
+        Keyvaluemaps(gen_auth(username, token), org, name)
         .delete_keyvaluemap_from_an_environment(environment)
         .text
     )
@@ -152,19 +151,15 @@ def get_value(*args, **kwargs):
 
 def _list_keyvaluemaps_in_an_environment(
     username,
-    password,
-    mfa_secret,
     token,
-    zonename,
     org,
     profile,
     environment,
-    prefix=None,
     **kwargs
 ):
     return Keyvaluemaps(
-        gen_auth(username, password, mfa_secret, token, zonename), org, None
-    ).list_keyvaluemaps_in_an_environment(environment, prefix=prefix)
+        gen_auth(username, token), org, None
+    ).list_keyvaluemaps_in_an_environment(environment)
 
 
 @keyvaluemaps.command(
@@ -180,10 +175,10 @@ def list(*args, **kwargs):
 
 
 def _update_keyvaluemap_in_an_environment(
-    username, password, mfa_secret, token, zonename, org, profile, name, environment, body, **kwargs
+    username, token, org, profile, name, environment, body, **kwargs
 ):
     return (
-        Keyvaluemaps(gen_auth(username, password, mfa_secret, token, zonename), org, name)
+        Keyvaluemaps(gen_auth(username, token), org, name)
         .update_keyvaluemap_in_an_environment(environment, body)
         .text
     )
@@ -204,10 +199,7 @@ def update(*args, **kwargs):
 
 def _create_an_entry_in_an_environment_scoped_kvm(
     username,
-    password,
-    mfa_secret,
     token,
-    zonename,
     org,
     profile,
     name,
@@ -217,7 +209,7 @@ def _create_an_entry_in_an_environment_scoped_kvm(
     **kwargs
 ):
     return (
-        Keyvaluemaps(gen_auth(username, password, mfa_secret, token, zonename), org, name)
+        Keyvaluemaps(gen_auth(username, token), org, name)
         .create_an_entry_in_an_environment_scoped_kvm(environment, entry_name, entry_value)
         .text
     )
@@ -274,10 +266,7 @@ def update_entry(*args, **kwargs):
 
 def _list_keys_in_an_environment_scoped_keyvaluemap(
     username,
-    password,
-    mfa_secret,
     token,
-    zonename,
     org,
     profile,
     name,
@@ -287,7 +276,7 @@ def _list_keys_in_an_environment_scoped_keyvaluemap(
     **kwargs
 ):
     return (
-        Keyvaluemaps(gen_auth(username, password, mfa_secret, token, zonename), org, name)
+        Keyvaluemaps(gen_auth(username, token), org, name)
         .list_keys_in_an_environment_scoped_keyvaluemap(environment, startkey, count)
         .text
     )

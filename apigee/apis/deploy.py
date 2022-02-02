@@ -15,40 +15,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import base64
-import getopt
 import http.client
 import io
 import json
+import logging
 import os
 import re
 import sys
 import urllib.parse
-import xml.dom.minidom
 import zipfile
-
-from requests.exceptions import HTTPError
 
 from apigee import APIGEE_ADMIN_API_URL, auth, console
 from apigee.apis.apis import Apis
 
-ApigeeHost = APIGEE_ADMIN_API_URL
-UserPW = None
-Directory = None
-Organization = None
-Environment = None
-Name = None
-BasePath = '/'
-ShouldDeploy = True
-ShouldOverride = False
-GracePeriod = 15
-Auth = None
-
-url = urllib.parse.urlparse(ApigeeHost)
+url = urllib.parse.urlparse(APIGEE_ADMIN_API_URL)
 httpScheme = url[0]
 httpHost = url[1]
-
-body = None
 
 
 class Struct:
@@ -66,39 +48,9 @@ def httpCall(verb, uri, headers, body):
         hdrs = {}
     else:
         hdrs = headers
-
-    # if Auth:
-    #     # hdrs['Authorization'] = 'Bearer %s' % AccessToken
-    #     hdrs = auth.set_header(hdrs, Auth)
-    # else:
-    #     hdrs['Authorization'] = 'Basic %s' % base64.b64encode(UserPW.encode()).decode()
     hdrs = auth.set_header(Auth, headers=hdrs)
     conn.request(verb, uri, body, hdrs)
-
     return conn.getresponse()
-
-
-def getElementText(n):
-    c = n.firstChild
-    str = io.StringIO()
-
-    while c != None:
-        if c.nodeType == xml.dom.Node.TEXT_NODE:
-            str.write(c.data)
-        c = c.nextSibling
-
-    return str.getvalue().strip()
-
-
-def getElementVal(n, name):
-    c = n.firstChild
-
-    while c != None:
-        if c.nodeName == name:
-            return getElementText(c)
-        c = c.nextSibling
-
-    return None
 
 
 # Return TRUE if any component of the file path contains a directory name that
@@ -115,78 +67,34 @@ def pathContainsDot(p):
 
 def getDeployments():
     # Print info on deployments
-    hdrs = {'Accept': 'application/xml'}
+    hdrs = {'Accept': 'application/json'}
     resp = httpCall(
         'GET', '/v1/organizations/%s/apis/%s/deployments' % (Organization, Name), hdrs, None
     )
 
-    if resp.status != 200:
+    if resp.status >= 400:
+        logging.error(str(resp.readlines()))
         return None
+    deployments = json.loads(resp.read().decode()).get("deployments", [])
+    return deployments
 
-    ret = []
-    deployments = xml.dom.minidom.parse(resp)
-    environments = deployments.getElementsByTagName('Environment')
-
-    for env in environments:
-        envName = env.getAttribute('name')
-        revisions = env.getElementsByTagName('Revision')
-        for rev in revisions:
-            revNum = int(rev.getAttribute('name'))
-            error = None
-            state = getElementVal(rev, 'State')
-            basePaths = rev.getElementsByTagName('BasePath')
-
-            if len(basePaths) > 0:
-                basePath = getElementText(basePaths[0])
-            else:
-                basePath = 'unknown'
-
-            # svrs = rev.getElementsByTagName('Server')
-            status = {
-                'environment': envName,
-                'revision': revNum,
-                'basePath': basePath,
-                'state': state,
-            }
-
-            if error != None:
-                status['error'] = error
-
-            ret.append(status)
-
-    return ret
-
-
+        
 def printDeployments(dep, check_revision=None):
     if check_revision:
+        check_revision = str(check_revision)
         revisions = [d['revision'] for d in dep]
+        print(revisions, check_revision)
         if check_revision not in revisions:
-            sys.exit('Error: proxy version %i not found' % check_revision)
-        console.echo('Proxy version %i found' % check_revision)
+            sys.exit('Error: proxy version %s not found' % check_revision)
+        console.echo('Proxy version %s found' % check_revision)
     for d in dep:
         console.echo('Environment: %s' % d['environment'])
-        console.echo('  Revision: %i BasePath = %s' % (d['revision'], d['basePath']))
-        console.echo('  State: %s' % d['state'])
-        if d['state'] == 'missing':
-            console.echo('Missing deployment. Attempting deletion...')
-            try:
-                Apis(Auth, Organization).undeploy_api_proxy_revision(
-                    Name, d['environment'], d['revision']
-                )
-                console.echo(
-                    Apis(Auth, Organization).delete_api_proxy_revision(Name, d['revision']).text
-                )
-            except HTTPError as e:
-                if e.response.status_code != 400:
-                    raise e
-        elif d['state'] != 'deployed':
-            sys.exit(1)
+        console.echo('  Revision: %s' % (d['revision']))
         if 'error' in d:
             console.echo('  Error: %s' % d['error'])
 
 
 def deploy(args):
-    global UserPW
     global Directory
     global Organization
     global Environment
@@ -194,45 +102,19 @@ def deploy(args):
     global ShouldDeploy
     global ShouldOverride
     global Auth
+    global ServiceAccount
 
-    # ApigeeHost = 'https://api.enterprise.apigee.com'
-    UserPW = args.username + ':' + args.password
     Directory = args.directory
     Organization = args.org
     Environment = args.environment
     Name = args.name
-    # BasePath = '/'
     ShouldDeploy = not args.import_only
     ShouldOverride = args.seamless_deploy
-    # GracePeriod = 15
-    # AccessToken = mfa_with_pyotp.get_access_token(args)
+    ServiceAccount = args.service_account
     Auth = Struct(
         username=args.username,
-        password=args.password,
-        mfa_secret=args.mfa_secret,
-        token=args.token,
-        zonename=args.zonename,
+        token=args.token
     )
-
-    # if UserPW == None or \
-    #         (Directory == None and ZipFile == None) or \
-    #         Environment == None or \
-    #         Name == None or \
-    #         Organization == None:
-    #     print """Usage: deploy -n [name] (-d [directory name] | -z [zipfile])
-    #               -e [environment] -u [username:password] -o [organization]
-    #               [-p [base path] -h [apigee API url] -i]
-    #     base path defaults to "/"
-    #     Apigee URL defaults to "https://api.enterprise.apigee.com"
-    #     -i denotes to import only and not actually deploy
-    #     """
-    #     sys.exit(1)
-
-    # url = urlparse.urlparse(ApigeeHost)
-    # httpScheme = url[0]
-    # httpHost = url[1]
-    #
-    # body = None
 
     if Directory != None:
         # Construct a ZIPped copy of the bundle in memory
@@ -251,10 +133,10 @@ def deploy(args):
 
         zipout.close()
         body = tf.getvalue()
-    elif ZipFile != None:
-        f = open(ZipFile, 'r')
-        body = f.read()
-        f.close()
+    #elif ZipFile != None:
+    #    f = open(ZipFile, 'r')
+    #    body = f.read()
+    #    f.close()
 
     # Upload the bundle to the API
     hdrs = {'Content-Type': 'application/octet-stream', 'Accept': 'application/json'}
@@ -271,79 +153,43 @@ def deploy(args):
     revision = int(deployment['revision'])
 
     console.echo('Imported new proxy version %i' % revision)
-
+    
     if ShouldDeploy and not ShouldOverride:
         # Undeploy duplicates
         deps = getDeployments()
         for d in deps:
             if (
                 d['environment'] == Environment
-                and d['basePath'] == BasePath
+                and d['apiProxy'] == Name
                 and d['revision'] != revision
             ):
                 console.echo(
-                    'Undeploying revision %i in same environment and path:' % d['revision']
+                    'Undeploying revision %s in same environment:' % d['revision']
                 )
-                conn = http.client.HTTPSConnection(httpHost)
-                resp = httpCall(
-                    'POST',
-                    (
-                        '/v1/organizations/%s/apis/%s/deployments'
-                        + '?action=undeploy'
-                        + '&env=%s'
-                        + '&revision=%i'
-                    )
-                    % (Organization, Name, Environment, d['revision']),
-                    None,
-                    None,
-                )
-                if resp.status != 200 and resp.status != 204:
+                resp = Apis(Auth, Organization).undeploy_api_proxy_revision(d["apiProxy"], d["environment"], d["revision"])
+                if resp.status_code >= 400:
                     console.echo(
-                        'Error %i on undeployment:\n%s' % (resp.status, resp.read().decode())
+                        'Error %i on undeployment:\n%s' % (resp.status_code, resp.text)
                     )
 
         # Deploy the bundle
         hdrs = {'Accept': 'application/json'}
-        resp = httpCall(
-            'POST',
-            (
-                '/v1/organizations/%s/apis/%s/deployments'
-                + '?action=deploy'
-                + '&env=%s'
-                + '&revision=%i'
-                + '&basepath=%s'
-            )
-            % (Organization, Name, Environment, revision, BasePath),
-            hdrs,
-            None,
-        )
+        resp = Apis(Auth, Organization).deploy_api_proxy_revision(Name, Environment, revision, ServiceAccount)
 
-        if resp.status != 200 and resp.status != 201:
-            console.echo('Deploy failed with status %i:\n%s' % (resp.status, resp.read().decode()))
+        if resp.status_code >= 400:
+            console.echo('Deploy failed with status %i:\n%s' % (resp.status_code, resp.text))
             sys.exit(2)
 
     if ShouldOverride:
         # Seamless Deploy the bundle
         console.echo('Seamless deploy %s' % Name)
         hdrs = {'Content-Type': 'application/x-www-form-urlencoded'}
-        resp = httpCall(
-            'POST',
-            (
-                '/v1/organizations/%s/environments/%s/apis/%s/revisions/%s/deployments'
-                + '?override=true'
-                + '&delay=%s'
-            )
-            % (Organization, Environment, Name, revision, GracePeriod),
-            hdrs,
-            None,
-        )
-
-        if resp.status != 200 and resp.status != 201:
-            console.echo('Deploy failed with status %i:\n%s' % (resp.status, resp.read().decode()))
+        resp = Apis(Auth, Organization).deploy_api_proxy_revision(Name, Environment, revision, ServiceAccount, override=True)
+        if resp.status_code >= 400:
+            console.echo('Deploy failed with status %i:\n%s' % (resp.status_code, resp.text))
             sys.exit(2)
 
     deps = getDeployments()
-    # printDeployments(deps, check_revision=revision)
     if ShouldDeploy and not ShouldOverride:
         printDeployments(deps)
     if ShouldOverride:

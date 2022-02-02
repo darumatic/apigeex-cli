@@ -8,24 +8,23 @@ class DeploymentsSerializer:
         if format == 'text':
             return deployment_details.text
         revisions = []
-        for i in deployment_details.json()['environment']:
+        for i in deployment_details.json()['deployments']:
             revisions.append(
                 {
-                    'name': i['name'],
-                    'revision': [j['name'] for j in i['revision']],
-                    'state': [j['state'] for j in i['revision']],
+                    'apiProxy': i['apiProxy'],
+                    'revision': i['revision'],
+                    'environment': i['environment'],
                 }
             )
         if format == 'json':
-            return json.dumps(revisions)
+            return json.dumps(revisions, indent=2)
         elif format == 'table':
-            table = [[rev['name'], rev['revision'], rev['state']] for rev in revisions]
+            table = [[rev['apiProxy'], rev['revision'], rev['environment']] for rev in revisions]
             headers = []
             if showindex == 'always' or showindex is True:
-                headers = ['id', 'name', 'revision', 'state']
+                headers = ['id', 'apiProxy', 'revision', 'environment']
             elif showindex == 'never' or showindex is False:
-                headers = ['name', 'revision', 'state']
+                headers = ['apiProxy', 'revision', 'environment']
             return tabulate(table, headers, showindex=showindex, tablefmt=tablefmt)
         else:
             raise ValueError(format)
-        return deployment_details

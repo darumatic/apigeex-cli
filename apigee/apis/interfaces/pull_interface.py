@@ -15,9 +15,9 @@ class InformalPullInterface:
             self._work_tree = os.getcwd()
         self._revision_number = revision_number
         self._environment = environment
-        self._keyvaluemaps_dir = str(Path(self._work_tree) / 'keyvaluemaps' / environment)
-        self._targetservers_dir = str(Path(self._work_tree) / 'targetservers' / environment)
-        self._caches_dir = str(Path(self._work_tree) / 'caches' / environment)
+        self._keyvaluemaps_dir = str(Path(self._work_tree) / 'keyvaluemaps' / self.environment)
+        self._targetservers_dir = str(Path(self._work_tree) / 'targetservers' / self.environment)
+        self._caches_dir = str(Path(self._work_tree) / 'caches' / self.environment)
         self._apiproxy_dir = str(Path(self._work_tree))
         self._zip_file = str(Path(self._apiproxy_dir).with_suffix('.zip'))
 
@@ -66,7 +66,7 @@ class InformalPullInterface:
 
     @keyvaluemaps_dir.setter
     def keyvaluemaps_dir(self, value):
-        self._keyvaluemaps_dir = str(Path(self._work_tree) / value / environment)
+        self._keyvaluemaps_dir = str(Path(self._work_tree) / value / self.environment)
 
     @property
     def targetservers_dir(self):
@@ -74,7 +74,7 @@ class InformalPullInterface:
 
     @targetservers_dir.setter
     def targetservers_dir(self, value):
-        self._targetservers_dir = str(Path(self._work_tree) / value / environment)
+        self._targetservers_dir = str(Path(self._work_tree) / value / self.environment)
 
     @property
     def caches_dir(self):
@@ -82,7 +82,7 @@ class InformalPullInterface:
 
     @caches_dir.setter
     def caches_dir(self, value):
-        self._caches_dir = str(Path(self._work_tree) / value / environment)
+        self._caches_dir = str(Path(self._work_tree) / value / self.environment)
 
     @property
     def apiproxy_dir(self):

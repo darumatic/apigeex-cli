@@ -1,0 +1,16 @@
+<APIProxy revision="2" name="deploy-test">
+    <DisplayName>Hello World</DisplayName>
+    <Description>An example API proxy.</Description>
+    <CreatedAt>1637700062474</CreatedAt>
+    <LastModifiedAt>1637700062474</LastModifiedAt>
+    <BasePaths>/hello-world</BasePaths>
+    <Policies>
+        <Policy>Lookup-Cache-1</Policy>
+    </Policies>
+    <ProxyEndpoints>
+        <ProxyEndpoint>default</ProxyEndpoint>
+    </ProxyEndpoints>
+    <TargetEndpoints>
+        <TargetEndpoint>default</TargetEndpoint>
+    </TargetEndpoints>
+</APIProxy>

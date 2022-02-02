@@ -44,13 +44,11 @@ class KeyvaluemapsSerializer:
             sys.exit('Incorrect symmetric key.')
         kvm_dict['entry'][index]['value'] = decrypted
 
-    def serialize_details(self, maps, format, prefix=None):
+    def serialize_details(self, maps, format):
         resp = maps
         if format == 'text':
             return maps.text
         maps = maps.json()
-        if prefix:
-            maps = [map for map in maps if map.startswith(prefix)]
         if format == 'json':
             return json.dumps(maps)
         elif format == 'table':
